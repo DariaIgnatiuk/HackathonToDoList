@@ -69,7 +69,8 @@ def register_new_user(first_name, last_name, username, password, email):
         query = f'''INSERT INTO users (first_name, last_name, email, user_name, password)				
         VALUES ('{first_name}', '{last_name}', '{email}', '{username}', '{password_hash.hexdigest()}')'''	
         cursor.execute(query)
-        connection.commit()   
+        connection.commit()  
+        print(f"Congratulations, {first_name}! You have been registered successfully!\n") 
     except psycopg2.Error as e:
         print(f"Database error: {e}") 
     
@@ -85,12 +86,10 @@ def registration_function():
                 if check_return_exit(password):
                     email = input("Enter your email address (1 to return, 2 to exit): ")
                     if check_return_exit(email):
-                        pass
                         # VALIDATION OF ALL THE DATA
                         # if validate_email_unique(email) and ...
-
                         register_new_user(first_name, last_name, username, password, email)
-                        print(f"Congratulations, {first_name}! You have been registered successfully!")
+                        
     authentication_menu()
 
 
