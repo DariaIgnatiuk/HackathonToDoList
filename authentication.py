@@ -1,9 +1,11 @@
-import sys
 import hashlib
 import psycopg2
 from dotenv import load_dotenv
-import os
 from database import cursor, connection
+from utils import *
+import pwinput
+
+
 
 class User: 
     def __init__(self, user_id, first_name, last_name, email) -> None:
@@ -12,14 +14,6 @@ class User:
         self.last_name = last_name
         self.email = email
         print(f"Hello, {first_name} {last_name}")
-
-# THIS SHOULD BE IN A DIFFERENT MODULE
-def exit_program(): 
-    '''Exits the program and closes connection to database'''
-    print("\nI hoped you enjoyed using this app. See you next time!") 
-    connection.close()
-    cursor.close()
-    sys.exit() 
 
 def check_return_exit(choice):
     '''Checks if the user's choice was to return or to exit'''
@@ -34,7 +28,7 @@ def login_function():
     '''This function check username - password combination and if successful returns and object of User'''
     username = input("Enter your username (1 to return, 2 to exit): ") 
     if check_return_exit(username):
-        password = input("Enter your password (1 to return, 2 to exit): ")
+        password = pwinput.pwinput("Enter your password (1 to return, 2 to exit): ")
         if check_return_exit(password):
             try:
                 password_hash = hashlib.sha3_224()
@@ -82,7 +76,7 @@ def registration_function():
         if check_return_exit(last_name):
             username = input("Enter your username (1 to return, 2 to exit): ") 
             if check_return_exit(username):
-                password = input("Enter your password (1 to return, 2 to exit): ") 
+                password = pwinput.pwinput("Enter your password (1 to return, 2 to exit): ") 
                 if check_return_exit(password):
                     email = input("Enter your email address (1 to return, 2 to exit): ")
                     if check_return_exit(email):
@@ -92,27 +86,11 @@ def registration_function():
                         
     authentication_menu()
 
-
-def authentication_menu_input():
-    '''This function displays authentification menu.
-    It asks the user to choose an action (log in, register, exit)
-    and runs until the accepted awnser is given. It returns
-    user's choice of action '''
-    choice = ''
-    accepted_choiced = ['1', '2', '3']
-    while choice not in accepted_choiced:
-        print("What would you like to do?:\n1. Log in\n2. Register\n3. Exit") 
-        choice = input("Enter your choice (1-3): ") 
-        if choice in accepted_choiced:
-            return choice
-        else:
-            print("\nInvalid choice. Please try again.") 
-
 def authentication_menu(): 
     '''This function gets user's choice of action and runs
     corresponding fuction'''
-
-    choice = authentication_menu_input()
+    user_options = {'1':'Log in', '2':'Register', '3':'Exit'}
+    choice = menu_user_options(user_options)
     if choice == "1": #login
         user = login_function() 
     elif choice == "2": #register
