@@ -3,7 +3,8 @@ from database import cursor, connection
 from tabulate import tabulate 
 from authentication import User
 from utils import *
-
+import datetime
+from email import send_email
 
 class Category:
     def __init__(self, category_id, category_name):
@@ -16,8 +17,8 @@ class Status:
         self.status_name = status_name        
 
 
-def view_tasks(option):
-    user_id = 14
+def view_tasks(user,option):
+    user_id = user.user_id
     if option == "all":
         print("These are all your tasks:")
         query = f""" 
@@ -74,31 +75,79 @@ def view_tasks(option):
     except psycopg2.Error as e:
         print(f"Error executing query: {e}")
         exit(1)
-
-    # *Get the column names from the cursor description (it is dictionary of column names and vaue types)
+# *Get the column names from the cursor description (it is dictionary of column names and vaue types)
     column_names = [description[0] for description in cursor.description]
-
 # *Convert the data list of tuples into a list of dictionaries without 0 column
     data_dict = [dict(zip(column_names[1:], row[1:])) for row in data]
-
 # *Convert the data list of tuples into a list of dictionaries
     full_data = [dict(zip(column_names, row)) for row in data]
-
 # *Create a table using tabulate, directly using the dictionaries
     table = tabulate(data_dict, headers="keys", tablefmt="grid")
-
 # Print the table
     print(table) 
+    send_email(table)
 
 
+
+def check_return_exit(choice):
+    '''Checks if the user's choice was to return or to exit'''
+    if choice == "1":
+        tasks_menu()
+    elif choice == "2":
+        exit_program()
+    else:
+        return True
+
+def add_new_task_to_db(user,task):
+    '''This function adds a new task to the database'''
+    user_id = user.user_id
+    try:
+        query = f'''INSERT INTO tasks (user_id, date_start, date_finish, status_id, category_id, task_content, task_comment)	
+    VALUES		
+    ({user_id}, '{task['date_start']}', '{task['date_finish']}', {task['status']}, {task['category']}, '{task['content']}', '{task['comment']}')		
+		'''	
+        cursor.execute(query)
+        connection.commit()  
+        print(f"Your task was added successfully!\n") 
+    except psycopg2.Error as e:
+        print(f"Database error: {e}") 
+
+def create_task(user):
+    while True:
+        task = {}
+        print("\nCategory: ")
+        category = choose_category_or_status('category')
+        task['category'] = category.category_id
+        task['content'] = input('Please write down your task: ')
+        print("\nStatus: ")
+        status = choose_category_or_status('status')
+        task['status'] = status.status_id
+        while True:
+            task['date_finish'] = input("Please enter the deadline in format 'YYYY-MM-DD': ")
+            deadline = datetime.datetime.strptime(task['date_finish'], "%Y-%m-%d")
+            now = datetime.datetime.today()
+            task['date_start'] = now.strftime('%Y-%m-%d') 
+            if deadline >= now:
+                break
+            else:
+                print("Deadline can't be before today")
+        task['comment'] = input ('Please enter your comment: ')
+        print('\nThis is your task:')
+        print(f"Category: {category.category_name}\nContent: {task['content']}\nStatus: {status.status_name}\nDeadline: {task['date_finish']}\nComment: {task['comment']}")
+        is_correct = input("Enter 1 if it is correct, 2 if you you want to change something: ")
+        if is_correct == '1':
+            add_new_task_to_db(user,task)
+            break
+
+def delete_task(user):
+    pass
+        
 def choose_category_or_status(option):
     '''This fuction displays the choice of categories of statuses and returns user's choice'''
     if option == 'category':
         query = "SELECT * FROM categories"
-        print("Categories: ")
     else:
         query = "SELECT * FROM statuses"
-        print("Statuses: ")
     cursor.execute(query)
     database = cursor.fetchall()
     for item in database:
@@ -116,39 +165,39 @@ def choose_category_or_status(option):
                 result = Status(item[0], item[1])
     return result
 
-
-def view_tasks_menu():
+def view_tasks_menu(user):
     '''This function gets user's choice of action in view meny and runs corresponding fuction'''
     user_options = {'1':'View all', '2':'View by category', '3': 'View by status', '4':'Return to task menu', '5':'Exit'}
     choice = menu_user_options(user_options)
     if choice == "1": # View all
-        view_tasks("all")
+        view_tasks(user, "all")
     elif choice == "2": #View by category
+        print("\nCategories: ")
         category = choose_category_or_status('category')
-        view_tasks(category)
+        view_tasks(user, category)
     elif choice == "3": # View by status
+        print("\nStatuses: ")
         status = choose_category_or_status('status')
-        view_tasks(status)
+        view_tasks(user, status)
     elif choice == "4": # Return to task menu
-        tasks_menu()
+        tasks_menu(user)
     else: # choice == "5" Exit
         exit_program() 
 
 
 # def tasks_menu(user): 
-def tasks_menu(): 
+def tasks_menu(user): 
     '''This function gets user's choice of action in tasks menu and runs
     corresponding fuction'''
     user_options = {'1':'View tasks', '2':'Create new tasks', '3': 'Edit tasks', '4':'Delete tasks', '5':'Exit'}
     choice = menu_user_options(user_options)
     if choice == "1": # View Tasks
-        view_tasks_menu()
+        view_tasks_menu(user)
     elif choice == "2": #Create new task
-        pass
+        create_task(user)
     elif choice == "3": # Edit tasks
-        pass
+        delete_task(user)
     elif choice == "4": # Delete tasks
         pass     
     else: # choice == "5" exit
         exit_program() 
-
