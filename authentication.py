@@ -265,8 +265,3 @@ def authentication_menu():
     elif choice == "3":  # exit
         exit_program() 
     return user
-
-    
-  
-
-  

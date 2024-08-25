@@ -1,2 +1,4 @@
 .env
 venv/
+to_do_list/
+__pycache__
