@@ -90,10 +90,10 @@ def view_tasks(user,option):
 def view_tasks_send_email(user, option):
     full_data, table = view_tasks(user,option)
     while True:
-        email_option = input("Whould you like to get your tasks by email?\n1: yes\n2: no\nEnter your choice: ")
+        email_option = input("Whould you like to get your tasks by email?\n1. yes\n2. no\nEnter your choice: ")
         if email_option == '1':
-            send_email(table)
-            print("Check your email!")
+            send_email(user.email, table)
+            print("\nCheck your email!")
             break
         else:
             print('Invalid input. Try again')
