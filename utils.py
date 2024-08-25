@@ -23,4 +23,4 @@ def menu_user_options(user_options):
         if choice in user_options:
             return choice
         else:
-            print("\nInvalid choice. Please try again.")     
+            print("\nInvalid choice. Please try again.")
