@@ -95,6 +95,8 @@ def view_tasks_send_email(user, option):
             send_email(user.email, table)
             print("\nCheck your email!")
             break
+        elif email_option == '2':
+            break
         else:
             print('Invalid input. Try again')
     return full_data
