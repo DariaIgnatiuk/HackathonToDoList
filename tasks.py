@@ -211,7 +211,7 @@ def view_tasks_menu(user):
 def tasks_menu(user): 
     '''This function gets user's choice of action in tasks menu and runs
     corresponding fuction'''
-    user_options = {'1':'View tasks', '2':'Create new tasks', '3': 'Edit tasks', '4':'Delete tasks', '5':'Exit'}
+    user_options = {'1':'View tasks', '2':'Create new tasks','3':'Delete tasks', '4':'Exit'}
     choice = menu_user_options(user_options)
     if choice == "1": # View Tasks
         view_tasks_menu(user)
@@ -219,10 +219,7 @@ def tasks_menu(user):
     elif choice == "2": #Create new task
         create_task(user)
         tasks_menu(user)
-    elif choice == "3": # Edit tasks
-        pass
-        #edit_task(user)
-    elif choice == "4": # Delete tasks
+    elif choice == "3": # Delete tasks
         delete_task(user)
         tasks_menu(user)
     else: # choice == "5" exit
