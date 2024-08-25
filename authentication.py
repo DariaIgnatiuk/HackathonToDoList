@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from database import cursor, connection
 from utils import *
 import pwinput
+import email_validator
 
 
 

@@ -4,7 +4,6 @@ from tabulate import tabulate
 from authentication import User
 from utils import *
 import datetime
-from email import send_email
 
 class Category:
     def __init__(self, category_id, category_name):
