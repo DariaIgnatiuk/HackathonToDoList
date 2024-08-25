@@ -4,6 +4,7 @@ from tabulate import tabulate
 from authentication import User
 from utils import *
 import datetime
+from message import *
 
 class Category:
     def __init__(self, category_id, category_name):
@@ -84,7 +85,7 @@ def view_tasks(user,option):
     table = tabulate(data_dict, headers="keys", tablefmt="grid")
 # Print the table
     print(table) 
-    send_email(table)
+    return(full_data)
 
 
 
@@ -138,8 +139,29 @@ def create_task(user):
             add_new_task_to_db(user,task)
             break
 
+def delete_task_from_db(task_id):
+    query = f"DELETE FROM tasks WHERE task_id ={task_id} "
+    try:
+        cursor.execute(query)
+        connection.commit()
+    except psycopg2.Error as e:
+        print(f"Error executing query: {e}")
+        exit(1)
+
 def delete_task(user):
-    pass
+    tasks = view_tasks_menu(user)
+    while True:
+        number = int(input("Enter the number of the task you want to delete: "))
+        if number <= len(tasks):
+            break
+        else:
+            print("This is not a  corrent task number. Try again")
+    for task in tasks:
+        if task['No.'] == number:
+            task_id_to_delete = task['task_id']
+    delete_task_from_db(task_id_to_delete)
+    print("Your task was deleted")
+
         
 def choose_category_or_status(option):
     '''This fuction displays the choice of categories of statuses and returns user's choice'''
@@ -169,19 +191,20 @@ def view_tasks_menu(user):
     user_options = {'1':'View all', '2':'View by category', '3': 'View by status', '4':'Return to task menu', '5':'Exit'}
     choice = menu_user_options(user_options)
     if choice == "1": # View all
-        view_tasks(user, "all")
+        tasks = view_tasks(user, "all")
     elif choice == "2": #View by category
         print("\nCategories: ")
         category = choose_category_or_status('category')
-        view_tasks(user, category)
+        tasks = view_tasks(user, category)
     elif choice == "3": # View by status
         print("\nStatuses: ")
         status = choose_category_or_status('status')
-        view_tasks(user, status)
+        tasks = view_tasks(user, status)
     elif choice == "4": # Return to task menu
         tasks_menu(user)
     else: # choice == "5" Exit
         exit_program() 
+    return tasks
 
 
 # def tasks_menu(user): 
@@ -192,11 +215,15 @@ def tasks_menu(user):
     choice = menu_user_options(user_options)
     if choice == "1": # View Tasks
         view_tasks_menu(user)
+        tasks_menu(user)
     elif choice == "2": #Create new task
         create_task(user)
+        tasks_menu(user)
     elif choice == "3": # Edit tasks
-        delete_task(user)
+        pass
+        #edit_task(user)
     elif choice == "4": # Delete tasks
-        pass     
+        delete_task(user)
+        tasks_menu(user)
     else: # choice == "5" exit
         exit_program() 
