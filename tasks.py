@@ -85,8 +85,19 @@ def view_tasks(user,option):
     table = tabulate(data_dict, headers="keys", tablefmt="grid")
 # Print the table
     print(table) 
-    return(full_data)
+    return(full_data,table)
 
+def view_tasks_send_email(user, option):
+    full_data, table = view_tasks(user,option)
+    while True:
+        email_option = input("Whould you like to get your tasks by email?\n1: yes\n2: no\nEnter your choice: ")
+        if email_option == '1':
+            send_email(table)
+            print("Check your email!")
+            break
+        else:
+            print('Invalid input. Try again')
+    return full_data
 
 
 def check_return_exit(choice):
@@ -115,29 +126,67 @@ def add_new_task_to_db(user,task):
 def create_task(user):
     while True:
         task = {}
+        
+        # Category Selection
         print("\nCategory: ")
         category = choose_category_or_status('category')
         task['category'] = category.category_id
-        task['content'] = input('Please write down your task: ')
+        
+         # Validate Category
+        if not (1 <= task['category'] <= 8):
+            print("Category must be an integer value within the range 1-8.")
+            continue
+        
+        # Task Content
+        while True:
+            task['content'] = input('Please write down your task: ')
+            if task['content'].strip() == "":
+                print("Task content cannot be empty.")
+            elif len(task['content']) > 255:
+                print("Task content cannot be longer than 255 characters.")
+            else:
+                break
+            
+        # Status Selection
         print("\nStatus: ")
         status = choose_category_or_status('status')
         task['status'] = status.status_id
+        
+        # Validate Status
+        if not (1 <= task['status'] <= 4):
+            print("Status must be an integer value within the range 1-4.")
+            continue
+        
+        # Deadline
         while True:
-            task['date_finish'] = input("Please enter the deadline in format 'YYYY-MM-DD': ")
-            deadline = datetime.datetime.strptime(task['date_finish'], "%Y-%m-%d")
-            now = datetime.datetime.today()
-            task['date_start'] = now.strftime('%Y-%m-%d') 
-            if deadline >= now:
+            try:
+                task['date_finish'] = input("Please enter the deadline in format 'YYYY-MM-DD': ")
+                deadline = datetime.datetime.strptime(task['date_finish'], "%Y-%m-%d")
+                now = datetime.datetime.today()
+                task['date_start'] = now.strftime('%Y-%m-%d')
+                
+                if deadline.date() >= now.date():
+                    break
+                else:
+                    print("Deadline can't be before today.")
+            except ValueError:
+                print("Invalid date format. Please use 'YYYY-MM-DD'.")
+        
+        # Comment        
+        task['comment'] = input ('Please enter your comment: ')
+        
+        # Confirmation
+        while True:
+            print('\nThis is your task:')
+            print(f"Category: {category.category_name}\nContent: {task['content']}\nStatus: {status.status_name}\nDeadline: {task['date_finish']}\nComment: {task['comment']}")
+            is_correct = input("Enter 1 if it is correct, 2 if you want to change something: ")
+            if is_correct in ['1', '2']:
+                if is_correct == '1':
+                    add_new_task_to_db(user, task)
+                    return
                 break
             else:
-                print("Deadline can't be before today")
-        task['comment'] = input ('Please enter your comment: ')
-        print('\nThis is your task:')
-        print(f"Category: {category.category_name}\nContent: {task['content']}\nStatus: {status.status_name}\nDeadline: {task['date_finish']}\nComment: {task['comment']}")
-        is_correct = input("Enter 1 if it is correct, 2 if you you want to change something: ")
-        if is_correct == '1':
-            add_new_task_to_db(user,task)
-            break
+                print("Invalid input. Please enter 1 to confirm or 2 to change something.")
 
 def delete_task_from_db(task_id):
     query = f"DELETE FROM tasks WHERE task_id ={task_id} "
@@ -164,26 +213,39 @@ def delete_task(user):
 
         
 def choose_category_or_status(option):
-    '''This fuction displays the choice of categories of statuses and returns user's choice'''
+    '''This function displays the choice of categories or statuses and returns user's choice'''
     if option == 'category':
         query = "SELECT * FROM categories"
     else:
         query = "SELECT * FROM statuses"
+    
     cursor.execute(query)
     database = cursor.fetchall()
+    
     for item in database:
         print(f"{item[0]}. {item[1]}")
-    while True:     
-        choice = int(input("Please choose the number: "))
-        if choice >= 1 and choice <= len(database):
-            break
-        print("This is the wrong number. Try again!")          
+    
+    while True:
+        try:
+            choice = int(input("Please choose the number: "))
+            if option == 'category' and (choice < 1 or choice > 8):
+                print("Category must be an integer value within the range 1-8.")
+            elif option == 'status' and (choice < 1 or choice > 4):
+                print("Status must be an integer value within the range 1-4.")
+            elif choice >= 1 and choice <= len(database):
+                break
+            else:
+                print("This is the wrong number. Try again!")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+    
     for item in database:
         if item[0] == choice:
             if option == 'category':
                 result = Category(item[0], item[1])
             else:
                 result = Status(item[0], item[1])
+    
     return result
 
 def view_tasks_menu(user):
@@ -191,15 +253,15 @@ def view_tasks_menu(user):
     user_options = {'1':'View all', '2':'View by category', '3': 'View by status', '4':'Return to task menu', '5':'Exit'}
     choice = menu_user_options(user_options)
     if choice == "1": # View all
-        tasks = view_tasks(user, "all")
+        tasks = view_tasks_send_email(user, "all")
     elif choice == "2": #View by category
         print("\nCategories: ")
         category = choose_category_or_status('category')
-        tasks = view_tasks(user, category)
+        tasks = view_tasks_send_email(user, category)
     elif choice == "3": # View by status
         print("\nStatuses: ")
         status = choose_category_or_status('status')
-        tasks = view_tasks(user, status)
+        tasks = view_tasks_send_email(user, status)
     elif choice == "4": # Return to task menu
         tasks_menu(user)
     else: # choice == "5" Exit

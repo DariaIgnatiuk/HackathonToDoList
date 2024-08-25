@@ -2,21 +2,20 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-sender_email = "tasks.organizer.app@gmail.com"
-sender_password = "evze pgjl olhi vtnr"
-receiver_email = "ignatyuk.dariaa@gmail.com"
 
-message = MIMEMultipart()
-message["From"] = sender_email
-message["To"] = receiver_email
 
 def send_email(table):
+    sender_email = "tasks.organizer.app@gmail.com"
+    sender_password = "evze pgjl olhi vtnr"
+    receiver_email = "ignatyuk.dariaa@gmail.com"
+
     message = MIMEMultipart()
     message["From"] = sender_email
     message["To"] = receiver_email
     message["Subject"] = "Your to do list"
-    body = table
 
+    # Plain text body
+    body = table
     message.attach(MIMEText(body, "plain"))
 
     with smtplib.SMTP("smtp.gmail.com", 587) as server:
